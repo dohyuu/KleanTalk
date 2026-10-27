@@ -3,12 +3,9 @@
 맥용 카카오톡의 광고 자리를 **카카오톡과 같은 색의 빈 공간**으로 바꾸는 macOS 앱입니다.
 카카오톡 앱 파일을 고치거나 다시 서명하지 않고, 대화 내용과 설정에도 손대지 않습니다.
 
-![설치 후 카카오톡 아래쪽 광고 자리](docs/images/after.png)
+![KleanTalk](docs/images/1-hero-ko.png)
 
-<p>
-<img src="docs/images/install-ko.png" width="400" alt="설치 화면">
-<img src="docs/images/status-ko.png" width="400" alt="설치 후 화면">
-</p>
+![설치는 세 단계](docs/images/3-install-steps-ko.png)
 
 > 카카오와 관계없는 비공식 개인 프로젝트입니다. 사용에 따른 책임은 사용자에게 있습니다.
 > 카카오톡 이용약관과 맞지 않을 수 있으니 확인하고 사용하세요.
@@ -27,7 +24,7 @@
 
 ## 설치
 
-1. [Releases](../../releases)에서 `KleanTalk.dmg`를 받아 `KleanTalk.app`을 응용 프로그램 폴더로 옮깁니다.
+1. [KleanTalk.dmg 받기](https://github.com/showmeyourway-sketch/KleanTalk/releases/latest/download/KleanTalk.dmg) 후 `KleanTalk.app`을 응용 프로그램 폴더로 옮깁니다.
 2. 앱을 엽니다. 처음 열 때 *"Apple은 악성 코드가 없는지 확인할 수 없습니다"* 경고가 뜨면 다음과 같이 합니다.
    - 이 앱은 Apple 공증을 받지 않아 이 경고가 뜹니다.
    - **시스템 설정 → 개인정보 보호 및 보안**의 아래쪽에서 **그래도 열기**를 누르세요.
@@ -100,6 +97,8 @@ sudo ./scripts/uninstall-adserver.sh
 ---
 
 ## English
+
+![KleanTalk](docs/images/1-hero-en.png)
 
 KleanTalk turns the ad slot in KakaoTalk for Mac into **empty space in KakaoTalk's own colors**. It doesn't patch or re-sign the KakaoTalk app, and doesn't touch your chats or settings.
 
