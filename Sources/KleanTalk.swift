@@ -494,7 +494,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                              styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
             w.title = "KleanTalk"
             w.isReleasedWhenClosed = false
-            w.contentView = NSHostingView(rootView: RootView(model: model))
+            if ProcessInfo.processInfo.environment["KLEANTALK_SNAPSHOT"] != nil {
+                // 스냅숏은 창이 맨 앞이 아니어도 활성 창 모양(파란 기본 버튼)으로 그린다
+                w.contentView = NSHostingView(rootView: RootView(model: model).environment(\.controlActiveState, .key))
+            } else {
+                w.contentView = NSHostingView(rootView: RootView(model: model))
+            }
             w.center()
             w.delegate = self
             window = w
@@ -502,6 +507,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         NSApp.setActivationPolicy(.regular)
         window?.makeKeyAndOrderFront(nil)
         NSApp.activate()
+        if let path = ProcessInfo.processInfo.environment["KLEANTALK_SNAPSHOT"] { snapshot(to: path) }
+    }
+
+    /// 개발용: 창 내용을 2배 크기 PNG로 저장하고 끝낸다 (소개 이미지·문서용, KLEANTALK_SNAPSHOT=<파일>)
+    private func snapshot(to path: String) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            guard let view = self?.window?.contentView else { NSApp.terminate(nil); return }
+            let size = view.bounds.size
+            guard let rep = NSBitmapImageRep(bitmapDataPlanes: nil, pixelsWide: Int(size.width * 2), pixelsHigh: Int(size.height * 2),
+                                             bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
+                                             colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0) else { NSApp.terminate(nil); return }
+            rep.size = size
+            view.cacheDisplay(in: view.bounds, to: rep)
+            try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
+            NSApp.terminate(nil)
+        }
     }
 
     private func buildMenu() {

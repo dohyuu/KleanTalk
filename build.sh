@@ -14,11 +14,20 @@ cp Info.plist "$APP/Contents/Info.plist"
 # 지원 언어 폴더 (macOS 기본 창·메뉴가 앱 언어와 맞게 뜨도록)
 for lang in ko en; do mkdir -p "$RES/$lang.lproj"; done
 
-swiftc -O -swift-version 5 -parse-as-library -target arm64-apple-macos14.0 \
-  -o "$APP/Contents/MacOS/KleanTalk" Sources/*.swift
+# Apple Silicon(arm64)과 Intel(x86_64)용으로 각각 컴파일해 하나의 유니버설 실행 파일로 합친다
+universal() {   # universal <출력> <swiftc 인자...>
+  local out=$1; shift
+  for arch in arm64 x86_64; do
+    swiftc -O -swift-version 5 -target $arch-apple-macos14.0 -o "build/$arch-${out:t}" "$@"
+  done
+  lipo -create "build/arm64-${out:t}" "build/x86_64-${out:t}" -output "$out"
+  rm -f "build/arm64-${out:t}" "build/x86_64-${out:t}"
+}
+
+universal "$APP/Contents/MacOS/KleanTalk" -parse-as-library Sources/*.swift
 
 # 빈 광고 서버와 설치·제거 스크립트 (설치하면 root 전용 폴더로 복사된다)
-swiftc -O -swift-version 5 -target arm64-apple-macos14.0 -o "$RES/kleantalk-adserver" AdServer/main.swift
+universal "$RES/kleantalk-adserver" AdServer/main.swift
 install -m 755 scripts/install-adserver.sh scripts/uninstall-adserver.sh "$RES/"
 
 # 아이콘: 미리 컴파일해 둔 Icon Composer 형식 (바꾸려면 scripts/make-icon.sh, Xcode 필요)

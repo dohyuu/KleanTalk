@@ -1,7 +1,7 @@
 # KleanTalk
 
 맥용 카카오톡의 광고 자리를 **카카오톡과 같은 색의 빈 공간**으로 바꾸는 macOS 앱입니다.
-카카오톡 앱은 전혀 건드리지 않습니다.
+카카오톡 앱 파일을 고치거나 다시 서명하지 않고, 대화 내용과 설정에도 손대지 않습니다.
 
 ![설치 후 카카오톡 아래쪽 광고 자리](docs/images/after.png)
 
@@ -69,7 +69,7 @@ KleanTalk을 열고 **제거…**를 누릅니다. 다음을 모두 되돌리고
 
 ## 요구 사항과 한계
 
-- macOS 14 이상, Apple Silicon. 맥용 카카오톡 26.9.0에서 확인했습니다.
+- macOS 14 이상, Apple Silicon과 Intel 맥 모두. 맥용 카카오톡 26.9.0에서 확인했습니다.
 - **카카오가 광고 방식을 바꾸면 동작하지 않을 수 있습니다.** 광고 주소, 응답 형식, 광고 HTML과 앱이 주고받는 신호가 바뀌는 경우입니다.
 - **빈 광고 색:** 다크 모드에서 실측한 색입니다. 라이트 모드 색은 아직 실측하지 않았습니다.
 - **인증서 기한:** 825일입니다(macOS가 허용하는 최대). 기한이 다가오면 상태가 "작동하지 않음"으로 바뀝니다. 그때 **다시 설치**를 누르면 새로 만듭니다.
@@ -101,13 +101,14 @@ sudo ./scripts/uninstall-adserver.sh
 
 ## English
 
-KleanTalk turns the ad slot in KakaoTalk for Mac into **empty space in KakaoTalk's own colors**. It never modifies the KakaoTalk app itself.
+KleanTalk turns the ad slot in KakaoTalk for Mac into **empty space in KakaoTalk's own colors**. It doesn't patch or re-sign the KakaoTalk app, and doesn't touch your chats or settings.
 
 - **How it works:**
   1. It blocks Kakao's ad domains in `/etc/hosts`.
   2. It points `serv.ds.kakao.com` at a tiny local server on `127.84.11.1:443`.
   3. That server answers ad requests with a well-formed *blank* ad. KakaoTalk accepts it as a real ad, so it doesn't fall back to its built-in promo banner.
   4. Nothing is fetched from the real ad server.
+- **Requirements:** macOS 14 or later, on Apple Silicon or Intel Macs.
 - **Install:**
   1. Open the app and choose a language, then click **Install**. You'll enter your password twice: once for the administrator install, and once for macOS's certificate-trust confirmation.
   2. Because the app isn't notarized, macOS may block the first launch. Allow it in **System Settings → Privacy & Security → Open Anyway**.
