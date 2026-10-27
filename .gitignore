@@ -3,3 +3,4 @@ build/
 *.pem
 *.der
 *.p12
+vendor/

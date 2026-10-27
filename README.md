@@ -36,6 +36,14 @@
 설치 뒤에는 따로 켤 필요가 없습니다. KleanTalk은 로그인할 때 창 없이 실행돼 설정이 풀리지 않았는지 가끔 확인합니다.
 macOS 업데이트로 hosts가 초기화되는 경우 등에 확인합니다. 문제가 생기면 창을 띄워 **다시 설치**를 권합니다.
 
+## 업데이트
+
+1.3부터는 앱이 하루에 한 번 새 버전을 확인합니다. 새 버전이 있으면 알려 주고, 누르면 설치한 뒤 다시 실행합니다.
+메뉴의 **업데이트 확인…**으로 바로 확인할 수도 있습니다.
+- 업데이트 파일은 서명을 확인한 뒤에만 설치합니다(Sparkle, EdDSA).
+- 새 버전에 바뀐 서버가 들어 있으면 **다시 설치**를 한 번 눌러 마무리합니다. 관리자 암호를 묻습니다.
+- 1.2 이하를 쓰고 있다면 1.3은 직접 받아 설치해 주세요. 그다음부터는 자동으로 업데이트됩니다.
+
 ## 제거
 
 KleanTalk을 열고 **제거…**를 누릅니다. 다음을 모두 되돌리고 앱을 휴지통으로 옮깁니다.
@@ -77,7 +85,15 @@ KleanTalk을 열고 **제거…**를 누릅니다. 다음을 모두 되돌리고
 ./build.sh                # build/KleanTalk.app
 ./build.sh --install      # 빌드한 뒤 ~/Applications에 복사
 ./scripts/make-dmg.sh     # build/KleanTalk.dmg
+./scripts/release.sh 1.4 notes.md   # 새 버전 배포 (아래 설명)
 ```
+
+- 처음 빌드할 때 [Sparkle](https://sparkle-project.org) 2.10.0을 공식 릴리스에서 받아, SHA-256을 확인한 뒤 `vendor/`에 풉니다.
+- **새 버전 배포:** `scripts/release.sh`가 버전을 올리고 다음 일을 한 번에 합니다.
+  - DMG와 업데이트용 zip을 만들고, zip을 서명합니다.
+  - `appcast.xml`을 만듭니다.
+  - 커밋·태그·push 후 GitHub Release에 올립니다.
+  - 설치된 앱은 `releases/latest/download/appcast.xml`을 보므로, 새 Release가 Latest가 되면 업데이트를 받습니다.
 
 - 빌드에는 Xcode Command Line Tools(Swift)만 있으면 됩니다.
 - 아이콘은 미리 컴파일한 파일(`Icon/compiled/`)을 씁니다. 아이콘을 바꿀 때만 `./scripts/make-icon.sh`를 실행하세요(Xcode 26 이상 필요).
@@ -111,6 +127,7 @@ KleanTalk turns the ad slot in KakaoTalk for Mac into **empty space in KakaoTalk
 - **Install:**
   1. Open the app and choose a language, then click **Install**. You'll enter your password twice: once for the administrator install, and once for macOS's certificate-trust confirmation.
   2. Because the app isn't notarized, macOS may block the first launch. Allow it in **System Settings → Privacy & Security → Open Anyway**.
+- **Updates (1.3+):** the app checks once a day, and you can also choose **Check for Updates…** from the menu. Updates are verified with an EdDSA signature (Sparkle) before installing. If an update ships a new blank-ad server, click **Reinstall** once to finish.
 - **Uninstall:** click **Uninstall…** in the app. It removes everything (server, certificate trust, hosts entries, login item) and moves the app to the Trash.
 - **Security:**
   - The certificate is a non-CA leaf for `serv.ds.kakao.com` only, trusted for that hostname's SSL server auth in your user trust settings.

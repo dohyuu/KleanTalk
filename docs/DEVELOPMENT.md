@@ -53,6 +53,25 @@ build.sh, scripts/make-dmg.sh
   - 그래서 Icon Composer 형식(`.icon`)을 actool로 컴파일하고, 유리·반사·그림자를 끕니다.
   - SDK를 낮추면 아이콘은 괜찮아지지만, 버튼 등이 macOS 26 스타일이 아니게 됩니다.
 
+## 업데이트와 배포 (Sparkle)
+
+- **앱:**
+  - Sparkle 2.10.0을 `Contents/Frameworks`에 넣습니다(`build.sh`가 받아서 SHA-256 확인).
+  - `Info.plist`의 `SUFeedURL`은 `https://github.com/showmeyourway-sketch/KleanTalk/releases/latest/download/appcast.xml`입니다.
+  - 공개 키는 `SUPublicEDKey`에 있고, 하루 한 번 확인합니다.
+- **서명 키:** 비공개 키는 개발 맥의 로그인 키체인에 `kleantalk` 계정으로 있습니다(`generate_keys --account kleantalk`). **잃어버리면 업데이트를 서명할 수 없으므로 꼭 백업하세요.**
+  ```bash
+  vendor/Sparkle-2.10.0/bin/generate_keys --account kleantalk -x ~/kleantalk-sparkle-private-key   # 내보내기(안전한 곳에 보관)
+  vendor/Sparkle-2.10.0/bin/generate_keys --account kleantalk -f ~/kleantalk-sparkle-private-key   # 다른 맥에서 가져오기
+  ```
+- **배포:** `./scripts/release.sh <버전> <노트 파일>` 한 번으로 버전 올리기, DMG와 zip, 서명, appcast, 커밋·태그·push, GitHub Release까지 끝냅니다.
+- **서명 확인 방식:** 앱은 ad-hoc 서명이라, Sparkle은 코드 서명 대신 EdDSA 서명으로 업데이트를 확인합니다. 로컬 시험에서 실제 업데이트(다운로드, 서명 확인, 교체, 재실행)가 3초 안에 끝나는 것을 확인했습니다.
+- **서버도 바뀐 경우:** 설치된 서버와 앱 안의 서버가 다르면(SHA-256), 상태 화면에 '업데이트를 마치려면 다시 설치를 누르세요'와 **다시 설치** 버튼이 나옵니다. 다시 설치할 때 인증서는 그대로 쓰므로 암호는 한 번만 묻습니다.
+- **개발용 시험:**
+  - `KLEANTALK_BUILD_NUMBER=99 ./build.sh`: 빌드 번호를 바꿔 빌드합니다.
+  - `KLEANTALK_FEED=<appcast 주소> KLEANTALK_UPDATE_TEST=1`: 바로 확인하고, 받자마자 설치합니다.
+  - `NSAllowsLocalNetworking`은 로컬 http 시험 서버를 쓰려고 켜 둔 것입니다.
+
 ## 개발용 미리 보기
 
 화면을 확인하거나 스크린샷을 찍을 때 씁니다.
