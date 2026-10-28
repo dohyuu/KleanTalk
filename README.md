@@ -78,7 +78,7 @@ KleanTalk 메뉴의 **버그 신고…**(1.4부터)를 누르면 GitHub 이슈 �
 
 ## 요구 사항과 한계
 
-- macOS 14 이상, Apple Silicon과 Intel 맥 모두. 맥용 카카오톡 26.9.0에서 확인했습니다.
+- macOS 12(Monterey) 이상, Apple Silicon과 Intel 맥 모두. 맥용 카카오톡과 같은 기준입니다. 맥용 카카오톡 26.9.0에서 확인했습니다.
 - **카카오가 광고 방식을 바꾸면 동작하지 않을 수 있습니다.** 광고 주소, 응답 형식, 광고 HTML과 앱이 주고받는 신호가 바뀌는 경우입니다.
 - **빈 광고 색:** 다크 모드에서 실측한 색입니다. 라이트 모드 색은 아직 실측하지 않았습니다.
 - **인증서 기한:** 825일입니다(macOS가 허용하는 최대). 기한이 다가오면 상태가 "작동하지 않음"으로 바뀝니다. 그때 **다시 설치**를 누르면 새로 만듭니다.
@@ -99,7 +99,7 @@ KleanTalk 메뉴의 **버그 신고…**(1.4부터)를 누르면 GitHub 이슈 �
   - 커밋·태그·push 후 GitHub Release에 올립니다.
   - 설치된 앱은 `releases/latest/download/appcast.xml`을 보므로, 새 Release가 Latest가 되면 업데이트를 받습니다.
 
-- 빌드에는 Xcode Command Line Tools(Swift)만 있으면 됩니다.
+- 빌드에는 Xcode가 필요합니다. macOS 12용 Intel 빌드에 쓰는 Swift 호환 라이브러리가 Command Line Tools에는 없습니다.
 - 아이콘은 미리 컴파일한 파일(`Icon/compiled/`)을 씁니다. 아이콘을 바꿀 때만 `./scripts/make-icon.sh`를 실행하세요(Xcode 26 이상 필요).
 - 터미널로 서버만 설치하거나 지울 수도 있습니다.
 
@@ -127,7 +127,7 @@ KleanTalk turns the ad slot in KakaoTalk for Mac into **empty space in KakaoTalk
   2. It points `serv.ds.kakao.com` at a tiny local server on `127.84.11.1:443`.
   3. That server answers ad requests with a well-formed *blank* ad. KakaoTalk accepts it as a real ad, so it doesn't fall back to its built-in promo banner.
   4. Nothing is fetched from the real ad server.
-- **Requirements:** macOS 14 or later, on Apple Silicon or Intel Macs.
+- **Requirements:** macOS 12 (Monterey) or later, the same as KakaoTalk for Mac, on Apple Silicon or Intel Macs.
 - **Install:**
   1. Open the app and choose a language, then click **Install**. You'll enter your password twice: once for the administrator install, and once for macOS's certificate-trust confirmation.
   2. Because the app isn't notarized, macOS may block the first launch. Allow it in **System Settings → Privacy & Security → Open Anyway**.

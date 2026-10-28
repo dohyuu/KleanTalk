@@ -538,7 +538,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, SPUU
 
     func standardUserDriverWillHandleShowingUpdate(_ handleShowingUpdate: Bool, forUpdate update: SUAppcastItem, state: SPUUserUpdateState) {
         NSApp.setActivationPolicy(.regular)
-        NSApp.activate()
+        NSApp.bringToFront()
     }
 
     func standardUserDriverWillFinishUpdateSession() {
@@ -591,7 +591,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, SPUU
         }
         NSApp.setActivationPolicy(.regular)
         window?.makeKeyAndOrderFront(nil)
-        NSApp.activate()
+        NSApp.bringToFront()
         if let path = ProcessInfo.processInfo.environment["KLEANTALK_SNAPSHOT"] { snapshot(to: path) }
     }
 
@@ -638,5 +638,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, SPUU
         main.addItem(windowItem)
 
         NSApp.mainMenu = main
+    }
+}
+
+extension NSApplication {
+    /// 창을 앞으로 가져온다. activate()는 macOS 14부터라 12·13에서는 예전 방식을 쓴다.
+    func bringToFront() {
+        if #available(macOS 14, *) { activate() } else { activate(ignoringOtherApps: true) }
     }
 }

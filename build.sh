@@ -8,6 +8,12 @@ cd "${0:A:h}"
 
 APP="build/KleanTalk.app"
 
+# macOS 12용 Intel 빌드에 필요한 Swift 호환 라이브러리(x86_64)는 Command Line Tools에 없고 Xcode에만 있다
+if [[ -z ${DEVELOPER_DIR:-} ]]; then
+  [[ -d /Applications/Xcode.app ]] || { echo "Xcode가 필요합니다 (/Applications/Xcode.app)" >&2; exit 1; }
+  export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+fi
+
 # 자동 업데이트(Sparkle). 없으면 공식 릴리스를 받아 SHA-256을 확인한 뒤 vendor/에 푼다.
 SPARKLE_VERSION=2.10.0
 SPARKLE_SHA256=c2bf58aa8387266ac179357b1415d6f2635f044da8be41042af32425dae6da0c
@@ -31,7 +37,7 @@ for lang in ko en; do mkdir -p "$RES/$lang.lproj"; done
 universal() {   # universal <출력> <swiftc 인자...>
   local out=$1; shift
   for arch in arm64 x86_64; do
-    swiftc -O -swift-version 5 -target $arch-apple-macos14.0 -o "build/$arch-${out:t}" "$@"
+    swiftc -O -swift-version 5 -target $arch-apple-macos12.0 -o "build/$arch-${out:t}" "$@"
   done
   lipo -create "build/arm64-${out:t}" "build/x86_64-${out:t}" -output "$out"
   rm -f "build/arm64-${out:t}" "build/x86_64-${out:t}"

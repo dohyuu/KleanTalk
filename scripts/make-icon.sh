@@ -9,7 +9,7 @@ cd "${0:A:h}/.."
 export DEVELOPER_DIR=${DEVELOPER_DIR:-/Applications/Xcode.app/Contents/Developer}
 TMP=$(mktemp -d); trap 'rm -rf "${TMP:?}"' EXIT
 swift scripts/make-icon.swift Icon/AppIcon.icon/Assets/bubble.png
-xcrun actool --compile "$TMP" --platform macosx --minimum-deployment-target 14.0 --app-icon AppIcon \
+xcrun actool --compile "$TMP" --platform macosx --minimum-deployment-target 12.0 --app-icon AppIcon \
   --output-partial-info-plist "$TMP/partial.plist" Icon/AppIcon.icon >/dev/null
 cp "$TMP/Assets.car" "$TMP/AppIcon.icns" Icon/compiled/
 echo "아이콘을 만들었습니다: Icon/compiled/"
