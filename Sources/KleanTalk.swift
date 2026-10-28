@@ -22,6 +22,7 @@ struct Strings {
     let language: String, uninstallButton: String, uninstallTitle: String, uninstallBody: String, uninstall: String
     let adminPrompt: String, missingFiles: String, trustCanceled: String, trustFailed: String
     let checkUpdates: String, serverOutdated: String
+    let reportBug: String, bugTitle: String, bugBody: String
     let quit: String, edit: String, cut: String, copy: String, paste: String, selectAll: String, window: String, close: String
 
     static let ko = Strings(
@@ -39,6 +40,8 @@ struct Strings {
         trustCanceled: "인증서 등록을 취소했습니다. 다시 설치를 누르세요.",
         trustFailed: "인증서를 등록하지 못했습니다. 다시 설치를 누르세요.",
         checkUpdates: "업데이트 확인…", serverOutdated: "업데이트를 마치려면 다시 설치를 누르세요.",
+        reportBug: "버그 신고", bugTitle: "[버그] ",
+        bugBody: "### 무슨 일이 있었나요?\n\n\n### 어떻게 하면 다시 생기나요?\n1. \n\n### 환경 (자동으로 채움)\n",
         quit: "KleanTalk 종료", edit: "편집", cut: "잘라내기", copy: "복사", paste: "붙여넣기", selectAll: "모두 선택",
         window: "윈도우", close: "닫기")
 
@@ -58,6 +61,8 @@ struct Strings {
         trustCanceled: "Certificate registration was canceled. Click Reinstall.",
         trustFailed: "Couldn’t register the certificate. Click Reinstall.",
         checkUpdates: "Check for Updates…", serverOutdated: "Click Reinstall to finish the update.",
+        reportBug: "Report a Bug", bugTitle: "[Bug] ",
+        bugBody: "### What happened?\n\n\n### How can we reproduce it?\n1. \n\n### Environment (filled in automatically)\n",
         quit: "Quit KleanTalk", edit: "Edit", cut: "Cut", copy: "Copy", paste: "Paste", selectAll: "Select All",
         window: "Window", close: "Close")
 }
@@ -256,6 +261,29 @@ final class AppModel: ObservableObject {
         busy = false
     }
 
+    /// GitHub에 새 이슈 쓰기 화면을 연다. 버전·macOS·칩·카카오톡 버전·상태를 본문에 미리 채운다.
+    func reportBug() {
+        let info = Bundle.main.infoDictionary ?? [:]
+        let version = "\(info["CFBundleShortVersionString"] ?? "?") (\(info["CFBundleVersion"] ?? "?"))"
+        let kakao = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.kakao.KakaoTalkMac")
+            .flatMap { Bundle(url: $0)?.infoDictionary?["CFBundleShortVersionString"] as? String } ?? "-"
+        #if arch(arm64)
+        let chip = "Apple Silicon"
+        #else
+        let chip = "Intel"
+        #endif
+        let state = switch self.state { case .working: "working"; case .notWorking: "not working"; case .checking: "checking" }
+        let env = [
+            "- KleanTalk: \(version)",
+            "- macOS: \(ProcessInfo.processInfo.operatingSystemVersionString) · \(chip)",
+            "- KakaoTalk: \(kakao)",
+            "- 상태 / State: \(state)\(serverOutdated ? ", server outdated" : "")\(error.map { " · \($0)" } ?? "")",
+        ].joined(separator: "\n")
+        var c = URLComponents(string: "https://github.com/showmeyourway-sketch/KleanTalk/issues/new")!
+        c.queryItems = [.init(name: "labels", value: "bug"), .init(name: "title", value: t.bugTitle), .init(name: "body", value: t.bugBody + env)]
+        if let url = c.url { NSWorkspace.shared.open(url) }
+    }
+
     func uninstall() {
         busy = true; error = nil
         AdServer.untrustCertificate()
@@ -310,7 +338,8 @@ struct Header<Content: View>: View {
 struct LanguageView: View {
     @ObservedObject var model: AppModel
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        VStack(spacing: 0) {
+            // 제목과 선택지는 가운데에, 계속 버튼은 다른 화면처럼 오른쪽 아래에
             Header { Text("언어 · Language").font(.headline) }
             Picker("", selection: $model.language) {
                 Text("한국어").tag(Language.ko)
@@ -385,6 +414,10 @@ struct StatusView: View {
                 }
                 .labelsHidden()
                 .frame(width: 150)
+                Spacer()
+                Button(t.reportBug) { model.reportBug() }
+                    .buttonStyle(.link)
+                    .font(.callout)
             }
             .padding(.top, 18)
             Spacer()
@@ -513,6 +546,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, SPUU
     }
 
     @objc private func checkForUpdates(_ sender: Any?) { updater.checkForUpdates(sender) }
+    @objc private func reportBug(_ sender: Any?) { model.reportBug() }
 
     func updater(_ updater: SPUUpdater, willInstallUpdateOnQuit item: SUAppcastItem, immediateInstallationBlock: @escaping () -> Void) -> Bool {
         guard ProcessInfo.processInfo.environment["KLEANTALK_UPDATE_TEST"] != nil else { return false }
@@ -582,6 +616,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, SPUU
         let appItem = NSMenuItem()
         let appMenu = NSMenu()
         appMenu.addItem(withTitle: t.checkUpdates, action: #selector(checkForUpdates(_:)), keyEquivalent: "").target = self
+        appMenu.addItem(withTitle: t.reportBug + "…", action: #selector(reportBug(_:)), keyEquivalent: "").target = self
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: t.quit, action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appItem.submenu = appMenu

@@ -52,6 +52,10 @@ KleanTalk을 열고 **제거…**를 누릅니다. 다음을 모두 되돌리고
 - hosts 설정
 - 로그인 시 실행
 
+## 버그 신고
+
+KleanTalk 메뉴의 **버그 신고…**(1.4부터)를 누르면 GitHub 이슈 쓰기 화면이 열립니다. 앱 버전, macOS, 칩, 카카오톡 버전, 상태가 미리 채워집니다. 직접 쓰려면 [이슈 쓰기](https://github.com/showmeyourway-sketch/KleanTalk/issues/new?template=bug_report.md)를 누르세요. GitHub 계정이 필요합니다.
+
 ## 이 맥에서 바뀌는 것
 
 | 항목 | 위치 | 내용 |
@@ -129,6 +133,7 @@ KleanTalk turns the ad slot in KakaoTalk for Mac into **empty space in KakaoTalk
   2. Because the app isn't notarized, macOS may block the first launch. Allow it in **System Settings → Privacy & Security → Open Anyway**.
 - **Updates (1.3+):** the app checks once a day, and you can also choose **Check for Updates…** from the menu. Updates are verified with an EdDSA signature (Sparkle) before installing. If an update ships a new blank-ad server, click **Reinstall** once to finish.
 - **Uninstall:** click **Uninstall…** in the app. It removes everything (server, certificate trust, hosts entries, login item) and moves the app to the Trash.
+- **Report a bug:** choose **Report a Bug…** in the app menu (1.4+) to open a GitHub issue with your app version, macOS, chip, KakaoTalk version, and status filled in, or [open one directly](https://github.com/showmeyourway-sketch/KleanTalk/issues/new?template=bug_report.md). Needs a GitHub account.
 - **Security:**
   - The certificate is a non-CA leaf for `serv.ds.kakao.com` only, trusted for that hostname's SSL server auth in your user trust settings.
   - Its key is readable by root only.
