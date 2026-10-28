@@ -689,6 +689,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, SPUU
         NSApp.setActivationPolicy(.regular)
         window?.makeKeyAndOrderFront(nil)
         NSApp.bringToFront()
+        // 키보드 탐색이 켜진 맥에서는 창이 첫 버튼(버그 신고)에 초점을 줘 선택된 것처럼 보인다. 열 때는 초점을 비운다(Tab으로는 그대로 이동).
+        window?.makeFirstResponder(nil)
+        DispatchQueue.main.async { [weak self] in self?.window?.makeFirstResponder(nil) }
         probeForUpdate()
         if let path = ProcessInfo.processInfo.environment["KLEANTALK_SNAPSHOT"] { snapshot(to: path) }
     }
