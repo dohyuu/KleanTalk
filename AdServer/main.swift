@@ -87,6 +87,49 @@ func httpResponse(status: String, contentType: String?, body: Data) -> Data {
     return Data(head.utf8) + body
 }
 
+// MARK: - 새로고침에는 광고 없음
+
+// 카카오톡은 창이 다시 앞으로 올 때 광고를 새로 받는데, 새 광고 화면이 그려지기 전 잠깐 흰 바탕이 비쳐 깜빡인다.
+// 새로고침에 '광고 없음'(204)으로 답하면 카카오톡은 지금 보여 주는 빈 광고를 그대로 둔다.
+// 다만 카카오톡이 막 켜졌을 때 광고 없음을 받으면 홍보 배너를 띄우므로, 카카오톡이 새로 실행된 뒤 첫 요청에는 빈 광고를 준다.
+// 요청만으로는 둘을 구분할 수 없어(주소가 같다) 카카오톡 프로세스의 시작 시각으로 가린다.
+
+/// 실행 중인 카카오톡 중 가장 늦게 시작한 것의 시작 시각(초). 찾지 못하면 nil.
+func newestKakaoTalkStart() -> Double? {
+    var mib: [Int32] = [CTL_KERN, KERN_PROC, KERN_PROC_ALL, 0]
+    var size = 0
+    guard sysctl(&mib, 3, nil, &size, nil, 0) == 0 else { return nil }
+    let stride = MemoryLayout<kinfo_proc>.stride
+    var procs = [kinfo_proc](repeating: kinfo_proc(), count: size / stride + 32)
+    size = procs.count * stride
+    guard sysctl(&mib, 3, &procs, &size, nil, 0) == 0 else { return nil }
+    var newest: Double?
+    for p in procs.prefix(size / stride) {
+        let name = withUnsafeBytes(of: p.kp_proc.p_comm) { String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self) }
+        guard name == "KakaoTalk" else { continue }
+        let t = p.kp_proc.p_starttime
+        let start = Double(t.tv_sec) + Double(t.tv_usec) / 1_000_000
+        newest = max(newest ?? start, start)
+    }
+    return newest
+}
+
+var blankServedForStart: Double?
+var blankServedAt = Date.distantPast
+
+/// 빈 광고를 줄지(true) 광고 없음으로 답할지(false).
+/// 카카오톡이 새로 켜졌거나, 시작 시각을 알 수 없거나, 마지막 빈 광고가 6시간을 넘었으면 빈 광고를 준다.
+/// (6시간: 어떤 이유로든 홍보 배너가 떠 있다면 다음 새로고침 때 빈 광고로 돌아오게 하는 안전장치. 그때 한 번 깜빡일 수 있다)
+func shouldServeBlank() -> Bool {
+    guard let start = newestKakaoTalkStart() else { return true }
+    if start != blankServedForStart || Date().timeIntervalSince(blankServedAt) > 6 * 3600 {
+        blankServedForStart = start
+        blankServedAt = Date()
+        return true
+    }
+    return false
+}
+
 func handle(_ connection: NWConnection) {
     connection.start(queue: .main)
     var buffer = Data()
@@ -99,7 +142,10 @@ func handle(_ connection: NWConnection) {
                 let parts = requestLine.split(separator: " ")
                 let path = parts.count > 1 ? String(parts[1]) : ""
                 let reply: Data
-                if parts.first == "GET" && path.hasPrefix("/sdk/banner") {
+                if parts.first == "GET" && path.hasPrefix("/sdk/banner") && !path.contains("kleantalk=check") && !shouldServeBlank() {
+                    reply = httpResponse(status: "204 No Content", contentType: nil, body: Data())
+                    log.info("새로고침이라 광고 없음(204): 지금 빈 광고를 그대로 둔다")
+                } else if parts.first == "GET" && path.hasPrefix("/sdk/banner") {
                     reply = httpResponse(status: "200 OK", contentType: "application/json", body: blankAdResponse())
                     log.info("빈 광고 응답")
                 } else {
