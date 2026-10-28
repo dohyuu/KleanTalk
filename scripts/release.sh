@@ -44,7 +44,7 @@ cat > build/appcast.xml <<EOF
       <pubDate>$(LC_ALL=C date -u "+%a, %d %b %Y %H:%M:%S +0000")</pubDate>
       <sparkle:version>$BUILD</sparkle:version>
       <sparkle:shortVersionString>$VERSION</sparkle:shortVersionString>
-      <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+      <sparkle:minimumSystemVersion>$(/usr/libexec/PlistBuddy -c 'Print :LSMinimumSystemVersion' Info.plist)</sparkle:minimumSystemVersion>
       <description><![CDATA[$NOTES_HTML]]></description>
       <enclosure url="https://github.com/$REPO/releases/download/v$VERSION/KleanTalk-$VERSION.zip" $SIG type="application/octet-stream"/>
     </item>
