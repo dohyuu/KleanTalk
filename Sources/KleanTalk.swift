@@ -357,17 +357,21 @@ struct Header<Content: View>: View {
 struct LanguageView: View {
     @ObservedObject var model: AppModel
     var body: some View {
-        VStack(spacing: 0) {
-            // 제목과 선택지는 가운데에, 계속 버튼은 다른 화면처럼 오른쪽 아래에
-            Header { Text("언어 · Language").font(.headline) }
-            Picker("", selection: $model.language) {
-                Text("한국어").tag(Language.ko)
-                Text("English").tag(Language.en)
+        VStack(alignment: .leading, spacing: 0) {
+            // 다른 화면처럼 로고는 왼쪽에, 언어는 상태 화면과 같은 묶음 줄로
+            Header { Text("KleanTalk").font(.title3.bold()) }
+            GroupRow {
+                Text("언어 · Language")
+                Spacer()
+                Picker("", selection: $model.language) {
+                    Text("한국어").tag(Language.ko)
+                    Text("English").tag(Language.en)
+                }
+                .labelsHidden()
+                .fixedSize()
             }
-            .pickerStyle(.radioGroup)
-            .horizontalRadioGroupLayout()
-            .labelsHidden()
-            .padding(.top, 20)
+            .groupBox()
+            .padding(.top, 14)
             Spacer()
             HStack {
                 Spacer()
@@ -473,12 +477,19 @@ struct StatusView: View {
                 Divider()
                 LinkRow(title: t.uninstallButton) { model.error = nil; model.screen = .uninstallConfirm }
             }
-            .padding(.horizontal, 12)
-            .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.05)))
-            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.primary.opacity(0.08)))
+            .groupBox()
             .disabled(model.busy)
         }
         .task { await model.check() }
+    }
+}
+
+extension View {
+    /// 설정 앱처럼 줄들을 둥근 묶음으로 감싼다
+    func groupBox() -> some View {
+        padding(.horizontal, 12)
+            .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.05)))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.primary.opacity(0.08)))
     }
 }
 
