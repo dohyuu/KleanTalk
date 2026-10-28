@@ -21,7 +21,7 @@ struct Strings {
     let working: String, notWorking: String, checking: String, notWorkingNote: String, reinstall: String, restarted: String
     let language: String, uninstallButton: String, uninstallTitle: String, uninstallBody: String, uninstall: String
     let adminPrompt: String, missingFiles: String, trustCanceled: String, trustFailed: String
-    let checkUpdates: String, serverOutdated: String
+    let checkUpdates: String, serverOutdated: String, version: String, upToDate: String, updateTo: String
     let reportBug: String, bugTitle: String, bugBody: String
     let quit: String, edit: String, cut: String, copy: String, paste: String, selectAll: String, window: String, close: String
 
@@ -40,6 +40,7 @@ struct Strings {
         trustCanceled: "인증서 등록을 취소했습니다. 다시 설치를 누르세요.",
         trustFailed: "인증서를 등록하지 못했습니다. 다시 설치를 누르세요.",
         checkUpdates: "업데이트 확인…", serverOutdated: "업데이트를 마치려면 다시 설치를 누르세요.",
+        version: "버전", upToDate: "최신 버전", updateTo: "%@로 업데이트",
         reportBug: "버그 신고", bugTitle: "[버그] ",
         bugBody: "### 무슨 일이 있었나요?\n\n\n### 어떻게 하면 다시 생기나요?\n1. \n\n### 환경 (자동으로 채움)\n",
         quit: "KleanTalk 종료", edit: "편집", cut: "잘라내기", copy: "복사", paste: "붙여넣기", selectAll: "모두 선택",
@@ -61,6 +62,7 @@ struct Strings {
         trustCanceled: "Certificate registration was canceled. Click Reinstall.",
         trustFailed: "Couldn’t register the certificate. Click Reinstall.",
         checkUpdates: "Check for Updates…", serverOutdated: "Click Reinstall to finish the update.",
+        version: "Version", upToDate: "Up to date", updateTo: "Update to %@",
         reportBug: "Report a Bug", bugTitle: "[Bug] ",
         bugBody: "### What happened?\n\n\n### How can we reproduce it?\n1. \n\n### Environment (filled in automatically)\n",
         quit: "Quit KleanTalk", edit: "Edit", cut: "Cut", copy: "Copy", paste: "Paste", selectAll: "Select All",
@@ -202,7 +204,13 @@ final class AppModel: ObservableObject {
     @Published var error: String?
     @Published var restartedKakao = false
     @Published var serverOutdated = false
+    /// Sparkle로 확인한 새 버전. 확인 전이거나 확인하지 못하면 unknown.
+    enum Update: Equatable { case unknown, upToDate, available(String) }
+    @Published var update = Update.unknown
     var onLanguageChange: (() -> Void)?
+    var onInstallUpdate: (() -> Void)?
+
+    var version: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?" }
 
     var t: Strings { language == .ko ? .ko : .en }
 
@@ -220,13 +228,21 @@ final class AppModel: ObservableObject {
         case "uninstall": screen = .uninstallConfirm
         default: break
         }
+        // 개발용: 상태 화면의 업데이트 줄과 다시 설치 줄 (KLEANTALK_PREVIEW_UPDATE=1.7|latest, KLEANTALK_PREVIEW_OUTDATED=1)
+        switch env["KLEANTALK_PREVIEW_UPDATE"] {
+        case nil: break
+        case "latest": update = .upToDate
+        case let v?: update = .available(v)
+        }
+        previewOutdated = env["KLEANTALK_PREVIEW_OUTDATED"] != nil
     }
 
     /// 개발용 미리 보기 중에는 실제 상태를 확인하지 않고 '작동 중'으로 보여 준다
     private var preview = false
+    private var previewOutdated = false
 
     func check() async {
-        if preview { state = .working; return }
+        if preview { state = .working; serverOutdated = previewOutdated; return }
         guard AdServer.installed else { state = .notWorking; return }
         serverOutdated = AdServer.serverOutdated
         if state != .working { state = .checking }
@@ -320,8 +336,11 @@ struct RootView: View {
             }
         }
         .padding(.horizontal, 20)
-        .padding(.vertical, 16)
-        .frame(width: 440, height: 190, alignment: .topLeading)
+        .padding(.top, 2)
+        .padding(.bottom, 16)
+        // 상태 화면은 줄 수에 따라 높이가 바뀌고(창도 따라 바뀐다), 나머지 화면은 같은 크기
+        .frame(width: 440, height: model.screen == .status ? nil : 162, alignment: .topLeading)
+        .fixedSize(horizontal: false, vertical: model.screen == .status)
     }
 }
 
@@ -399,47 +418,94 @@ struct StatusView: View {
         case .notWorking: (t.notWorking, "exclamationmark.triangle.fill", .orange)
         case .checking: (t.checking, "circle.dotted", .secondary)
         }
-        VStack(alignment: .leading, spacing: 0) {
+        // 안내 문구: 오류 > 다시 설치 필요 > 작동 안 함 > 카카오톡 재시작 알림 순으로 하나만
+        let note: (text: String, isError: Bool)? =
+            if let error = model.error { (error, true) }
+            else if model.serverOutdated { (t.serverOutdated, false) }
+            else if model.state == .notWorking { (t.notWorkingNote, false) }
+            else if model.restartedKakao && model.state == .working { (t.restarted, false) }
+            else { nil }
+        let needsReinstall = model.state == .notWorking || model.serverOutdated
+        VStack(alignment: .leading, spacing: 14) {
             Header {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("KleanTalk").font(.headline)
-                    Label(label, systemImage: symbol).foregroundStyle(color).font(.callout)
-                }
+                Text("KleanTalk").font(.title3.bold())
+                Label(label, systemImage: symbol).foregroundStyle(color)
             }
-            HStack(spacing: 10) {
-                Text(t.language).foregroundStyle(.secondary)
-                Picker("", selection: $model.language) {
-                    Text("한국어").tag(Language.ko)
-                    Text("English").tag(Language.en)
+            // 설정 앱처럼 한 묶음 안에 줄을 나란히 둔다
+            VStack(spacing: 0) {
+                if let note {
+                    GroupRow {
+                        Text(note.text).font(.callout)
+                            .foregroundStyle(note.isError ? Color.red : Color.secondary)
+                            .lineLimit(2).fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 12)
+                        if needsReinstall { Button(t.reinstall) { model.install() } }
+                    }
+                    Divider()
                 }
-                .labelsHidden()
-                .frame(width: 150)
-                Spacer()
-                Button(t.reportBug) { model.reportBug() }
-                    .buttonStyle(.link)
-                    .font(.callout)
+                GroupRow {
+                    Text(t.version)
+                    Spacer()
+                    switch model.update {
+                    case .available(let new):
+                        Text(model.version).foregroundStyle(.secondary)
+                        Button(String(format: t.updateTo, new)) { model.onInstallUpdate?() }
+                            .buttonStyle(.borderedProminent)
+                    case .upToDate:
+                        Text("\(model.version) · \(t.upToDate)").foregroundStyle(.secondary)
+                    case .unknown:
+                        Text(model.version).foregroundStyle(.secondary)
+                    }
+                }
+                Divider()
+                GroupRow {
+                    Text(t.language)
+                    Spacer()
+                    Picker("", selection: $model.language) {
+                        Text("한국어").tag(Language.ko)
+                        Text("English").tag(Language.en)
+                    }
+                    .labelsHidden()
+                    .fixedSize()
+                }
+                Divider()
+                LinkRow(title: t.reportBug) { model.reportBug() }
+                Divider()
+                LinkRow(title: t.uninstallButton) { model.error = nil; model.screen = .uninstallConfirm }
             }
-            .padding(.top, 18)
-            Spacer()
-            HStack(spacing: 8) {
-                if let error = model.error {
-                    Text(error).font(.caption).foregroundStyle(.red).lineLimit(2)
-                } else if model.serverOutdated {
-                    Text(t.serverOutdated).font(.caption).foregroundStyle(.secondary).lineLimit(2)
-                } else if model.state == .notWorking {
-                    Text(t.notWorkingNote).font(.caption).foregroundStyle(.secondary).lineLimit(2)
-                } else if model.restartedKakao && model.state == .working {
-                    Text(t.restarted).font(.caption).foregroundStyle(.secondary).lineLimit(2)
-                }
-                Spacer()
-                if model.state == .notWorking || model.serverOutdated {
-                    Button(t.reinstall) { model.install() }
-                }
-                Button(t.uninstallButton, role: .destructive) { model.error = nil; model.screen = .uninstallConfirm }
-            }
+            .padding(.horizontal, 12)
+            .background(RoundedRectangle(cornerRadius: 10).fill(Color.primary.opacity(0.05)))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Color.primary.opacity(0.08)))
             .disabled(model.busy)
         }
         .task { await model.check() }
+    }
+}
+
+/// 묶음 안의 한 줄: 왼쪽에 이름, 오른쪽에 값이나 버튼
+struct GroupRow<Content: View>: View {
+    @ViewBuilder var content: Content
+    var body: some View {
+        HStack(spacing: 8) { content }
+            .frame(minHeight: 34)
+            .padding(.vertical, 2)
+    }
+}
+
+/// 누르면 동작하는 줄 (오른쪽에 >)
+struct LinkRow: View {
+    let title: String
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            GroupRow {
+                Text(title)
+                Spacer()
+                Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 
@@ -502,6 +568,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, SPUU
         model = AppModel()
         model.onLanguageChange = { [weak self] in self?.buildMenu() }
         updater = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: self, userDriverDelegate: self)
+        model.onInstallUpdate = { [weak self] in self?.updater.checkForUpdates(nil) }
         if ProcessInfo.processInfo.environment["KLEANTALK_UPDATE_TEST"] != nil {
             // 개발용: 업데이트를 바로 확인해 창 없이 받고, 받자마자 설치·재실행한다
             updater.updater.automaticallyDownloadsUpdates = true
@@ -546,6 +613,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, SPUU
     }
 
     @objc private func checkForUpdates(_ sender: Any?) { updater.checkForUpdates(sender) }
+
+    /// 창을 열 때 새 버전이 있는지 조용히 확인한다(창은 띄우지 않는다). 결과는 상태 화면의 버전 줄에 보인다.
+    private func probeForUpdate() {
+        let env = ProcessInfo.processInfo.environment
+        guard env["KLEANTALK_PREVIEW_UPDATE"] == nil, env["KLEANTALK_SNAPSHOT"] == nil,
+              updater.updater.canCheckForUpdates, !updater.updater.sessionInProgress else { return }
+        updater.updater.checkForUpdateInformation()
+    }
+
+    func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
+        model.update = .available(item.displayVersionString)
+    }
+
+    func updaterDidNotFindUpdate(_ updater: SPUUpdater) {
+        model.update = .upToDate
+    }
     @objc private func reportBug(_ sender: Any?) { model.reportBug() }
 
     func updater(_ updater: SPUUpdater, willInstallUpdateOnQuit item: SUAppcastItem, immediateInstallationBlock: @escaping () -> Void) -> Bool {
@@ -576,8 +659,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, SPUU
     private func showWindow() {
         if window == nil {
             let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 440, height: 190),
-                             styleMask: [.titled, .closable, .miniaturizable], backing: .buffered, defer: false)
-            w.title = "KleanTalk"
+                             styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView], backing: .buffered, defer: false)
+            w.title = "KleanTalk"   // 제목은 보이지 않지만 Mission Control·윈도우 메뉴에 쓰인다
+            w.titleVisibility = .hidden
+            w.titlebarAppearsTransparent = true
+            w.isMovableByWindowBackground = true
             w.isReleasedWhenClosed = false
             if ProcessInfo.processInfo.environment["KLEANTALK_SNAPSHOT"] != nil {
                 // 스냅숏은 창이 맨 앞이 아니어도 활성 창 모양(파란 기본 버튼)으로 그린다
@@ -592,6 +678,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, SPUU
         NSApp.setActivationPolicy(.regular)
         window?.makeKeyAndOrderFront(nil)
         NSApp.bringToFront()
+        probeForUpdate()
         if let path = ProcessInfo.processInfo.environment["KLEANTALK_SNAPSHOT"] { snapshot(to: path) }
     }
 
