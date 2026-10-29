@@ -38,13 +38,22 @@ install -o root -g wheel -m 755 "$SRC" "$DIR/kleantalk-adserver"
 TMP=$(mktemp -d)
 trap 'rm -rf "${TMP:?}"' EXIT
 if [[ $REUSE == false ]]; then
+# 확장 항목은 설정 파일로 준다. macOS 12의 LibreSSL 2.8.3에는 -addext 옵션이 없다.
+cat > "$TMP/req.cnf" <<CNF
+[req]
+distinguished_name = dn
+x509_extensions = ext
+prompt = no
+[dn]
+CN = $HOST
+[ext]
+subjectAltName = DNS:$HOST
+basicConstraints = critical,CA:FALSE
+keyUsage = critical,digitalSignature,keyEncipherment
+extendedKeyUsage = serverAuth
+CNF
 /usr/bin/openssl genrsa -out "$TMP/key.pem" 2048 2>/dev/null
-/usr/bin/openssl req -new -x509 -key "$TMP/key.pem" -days 825 -subj "/CN=$HOST" \
-  -addext "subjectAltName=DNS:$HOST" \
-  -addext "basicConstraints=critical,CA:FALSE" \
-  -addext "keyUsage=critical,digitalSignature,keyEncipherment" \
-  -addext "extendedKeyUsage=serverAuth" \
-  -out "$TMP/cert.pem" 2>/dev/null
+/usr/bin/openssl req -new -x509 -key "$TMP/key.pem" -days 825 -config "$TMP/req.cnf" -out "$TMP/cert.pem" 2>/dev/null
 install -o root -g wheel -m 600 /dev/null "$DIR/key.der"
 /usr/bin/openssl rsa -in "$TMP/key.pem" -outform DER -out "$DIR/key.der" 2>/dev/null
 install -o root -g wheel -m 644 "$TMP/cert.pem" "$DIR/cert.pem"
