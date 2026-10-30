@@ -1,13 +1,12 @@
 import AppKit
 import CryptoKit
-import Sparkle
 import SwiftUI
 
-// KleanTalk: 맥 카카오톡의 광고 자리를 카카오톡과 같은 색의 빈 공간으로 바꾼다.
+// NoAdsTalk: 맥 카카오톡의 광고 자리를 카카오톡과 같은 색의 빈 공간으로 바꾼다.
 // 설치하면 (1) /etc/hosts로 카카오 광고 주소를 막고 (2) 광고 요청에 빈 광고를 돌려주는 작은 서버(AdServer/)를
 // 이 맥에 띄운다. 켜고 끄는 설정은 없고, 설치하면 작동하고 제거하면 모두 원래대로 돌아간다.
 // 로그인 시 --background 인자로 창 없이 실행돼, 설정이 풀렸을 때(macOS 업데이트로 hosts 초기화 등)만 창을 띄운다.
-// 새 버전은 Sparkle로 받는다(하루 한 번 확인, EdDSA 서명 확인). 업데이트에 새 서버가 들어 있으면 '다시 설치'로 마무리한다.
+// 개인용 빌드: 앱 내부에서 새 버전을 조회하거나 내려받지 않는다.
 
 let isBackgroundLaunch = CommandLine.arguments.contains("--background")
 
@@ -21,51 +20,49 @@ struct Strings {
     let working: String, notWorking: String, checking: String, notWorkingNote: String, reinstall: String, restarted: String
     let language: String, uninstallButton: String, uninstallTitle: String, uninstallBody: String, uninstall: String
     let adminPrompt: String, missingFiles: String, trustCanceled: String, trustFailed: String
-    let checkUpdates: String, serverOutdated: String, version: String, upToDate: String, updateTo: String
+    let serverOutdated: String, version: String
     let reportBug: String, bugTitle: String, bugBody: String
     let quit: String, edit: String, cut: String, copy: String, paste: String, selectAll: String, window: String, close: String
 
     static let ko = Strings(
         continue: "계속",
-        installTitle: "KleanTalk 설치",
+        installTitle: "NoAdsTalk 설치",
         installItems: ["카카오톡 광고 주소 차단", "빈 광고를 돌려주는 작은 서버 설치", "serv.ds.kakao.com 전용 인증서 등록"],
         adminNote: "관리자 암호를 두 번 입력합니다", cancel: "취소", install: "설치",
         working: "작동 중", notWorking: "작동하지 않음", checking: "확인 중…",
         notWorkingNote: "설정이 풀렸을 수 있습니다. 다시 설치해 주세요.", reinstall: "다시 설치",
         restarted: "카카오톡을 다시 시작했습니다.",
-        language: "언어", uninstallButton: "제거…", uninstallTitle: "KleanTalk을 제거할까요?",
+        language: "언어", uninstallButton: "제거…", uninstallTitle: "NoAdsTalk을 제거할까요?",
         uninstallBody: "광고 차단과 빈 광고 서버를 모두 지웁니다.", uninstall: "제거",
-        adminPrompt: "KleanTalk을 설치하거나 제거하려면 암호가 필요합니다.",
+        adminPrompt: "NoAdsTalk을 설치하거나 제거하려면 암호가 필요합니다.",
         missingFiles: "앱 안에서 설치 파일을 찾지 못했습니다.",
         trustCanceled: "인증서 등록을 취소했습니다. 다시 설치를 누르세요.",
         trustFailed: "인증서를 등록하지 못했습니다. 다시 설치를 누르세요.",
-        checkUpdates: "업데이트 확인…", serverOutdated: "업데이트를 마치려면 다시 설치를 누르세요.",
-        version: "버전", upToDate: "최신 버전", updateTo: "%@로 업데이트",
+        serverOutdated: "앱에 포함된 서버를 설치하려면 다시 설치를 누르세요.", version: "버전",
         reportBug: "버그 신고", bugTitle: "[버그] ",
         bugBody: "### 무슨 일이 있었나요?\n\n\n### 어떻게 하면 다시 생기나요?\n1. \n\n### 환경 (자동으로 채움)\n",
-        quit: "KleanTalk 종료", edit: "편집", cut: "잘라내기", copy: "복사", paste: "붙여넣기", selectAll: "모두 선택",
+        quit: "NoAdsTalk 종료", edit: "편집", cut: "잘라내기", copy: "복사", paste: "붙여넣기", selectAll: "모두 선택",
         window: "윈도우", close: "닫기")
 
     static let en = Strings(
         continue: "Continue",
-        installTitle: "Install KleanTalk",
+        installTitle: "Install NoAdsTalk",
         installItems: ["Block KakaoTalk ad addresses", "Install a small server that returns blank ads",
                        "Register a certificate for serv.ds.kakao.com only"],
         adminNote: "You’ll enter your password twice", cancel: "Cancel", install: "Install",
         working: "Working", notWorking: "Not working", checking: "Checking…",
         notWorkingNote: "A setting may have been reset. Reinstall to fix it.", reinstall: "Reinstall",
         restarted: "KakaoTalk was restarted.",
-        language: "Language", uninstallButton: "Uninstall…", uninstallTitle: "Uninstall KleanTalk?",
+        language: "Language", uninstallButton: "Uninstall…", uninstallTitle: "Uninstall NoAdsTalk?",
         uninstallBody: "Removes ad blocking and the blank ad server.", uninstall: "Uninstall",
-        adminPrompt: "KleanTalk needs your password to install or uninstall.",
+        adminPrompt: "NoAdsTalk needs your password to install or uninstall.",
         missingFiles: "Couldn’t find the installer files inside the app.",
         trustCanceled: "Certificate registration was canceled. Click Reinstall.",
         trustFailed: "Couldn’t register the certificate. Click Reinstall.",
-        checkUpdates: "Check for Updates…", serverOutdated: "Click Reinstall to finish the update.",
-        version: "Version", upToDate: "Up to date", updateTo: "Update to %@",
+        serverOutdated: "Click Reinstall to install the server bundled with this app.", version: "Version",
         reportBug: "Report a Bug", bugTitle: "[Bug] ",
         bugBody: "### What happened?\n\n\n### How can we reproduce it?\n1. \n\n### Environment (filled in automatically)\n",
-        quit: "Quit KleanTalk", edit: "Edit", cut: "Cut", copy: "Copy", paste: "Paste", selectAll: "Select All",
+        quit: "Quit NoAdsTalk", edit: "Edit", cut: "Cut", copy: "Copy", paste: "Paste", selectAll: "Select All",
         window: "Window", close: "Close")
 }
 
@@ -93,7 +90,7 @@ enum AdServer {
     static let certPath = "/Library/Application Support/KleanTalk/AdServer/cert.der"
     static let installedBinaryPath = "/Library/Application Support/KleanTalk/AdServer/kleantalk-adserver"
 
-    /// 앱이 업데이트되면서 앱 안의 서버가 설치된 서버와 달라졌는지. (설치된 서버는 관리자 폴더에 있어 '다시 설치'로 바꾼다)
+    /// 앱 안의 서버와 설치된 서버가 다른지. (설치된 서버는 관리자 폴더에 있어 '다시 설치'로 바꾼다)
     static var serverOutdated: Bool {
         guard installed,
               let bundled = Bundle.main.path(forResource: "kleantalk-adserver", ofType: nil).flatMap(FileManager.default.contents(atPath:)),
@@ -204,11 +201,7 @@ final class AppModel: ObservableObject {
     @Published var error: String?
     @Published var restartedKakao = false
     @Published var serverOutdated = false
-    /// Sparkle로 확인한 새 버전. 확인 전이거나 확인하지 못하면 unknown.
-    enum Update: Equatable { case unknown, upToDate, available(String) }
-    @Published var update = Update.unknown
     var onLanguageChange: (() -> Void)?
-    var onInstallUpdate: (() -> Void)?
 
     var version: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?" }
 
@@ -228,12 +221,7 @@ final class AppModel: ObservableObject {
         case "uninstall": screen = .uninstallConfirm
         default: break
         }
-        // 개발용: 상태 화면의 업데이트 줄과 다시 설치 줄 (KLEANTALK_PREVIEW_UPDATE=1.7|latest, KLEANTALK_PREVIEW_OUTDATED=1)
-        switch env["KLEANTALK_PREVIEW_UPDATE"] {
-        case nil: break
-        case "latest": update = .upToDate
-        case let v?: update = .available(v)
-        }
+        // 개발용: 설치된 서버와 앱 안의 서버가 다른 상태를 미리 본다.
         previewOutdated = env["KLEANTALK_PREVIEW_OUTDATED"] != nil
     }
 
@@ -290,7 +278,7 @@ final class AppModel: ObservableObject {
         #endif
         let state = switch self.state { case .working: "working"; case .notWorking: "not working"; case .checking: "checking" }
         let env = [
-            "- KleanTalk: \(version)",
+            "- NoAdsTalk: \(version)",
             "- macOS: \(ProcessInfo.processInfo.operatingSystemVersionString) · \(chip)",
             "- KakaoTalk: \(kakao)",
             "- 상태 / State: \(state)\(serverOutdated ? ", server outdated" : "")\(error.map { " · \($0)" } ?? "")",
@@ -359,7 +347,7 @@ struct LanguageView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // 다른 화면처럼 로고는 왼쪽에, 언어는 상태 화면과 같은 묶음 줄로
-            Header { Text("KleanTalk").font(.title3.bold()) }
+            Header { Text("NoAdsTalk").font(.title3.bold()) }
             GroupRow {
                 Text("언어 · Language")
                 Spacer()
@@ -432,7 +420,7 @@ struct StatusView: View {
         let needsReinstall = model.state == .notWorking || model.serverOutdated
         VStack(alignment: .leading, spacing: 14) {
             Header {
-                Text("KleanTalk").font(.title3.bold())
+                Text("NoAdsTalk").font(.title3.bold())
                 Label(label, systemImage: symbol).foregroundStyle(color)
             }
             // 설정 앱처럼 한 묶음 안에 줄을 나란히 둔다
@@ -450,16 +438,7 @@ struct StatusView: View {
                 GroupRow {
                     Text(t.version)
                     Spacer()
-                    switch model.update {
-                    case .available(let new):
-                        Text(model.version).foregroundStyle(.secondary)
-                        Button(String(format: t.updateTo, new)) { model.onInstallUpdate?() }
-                            .buttonStyle(.borderedProminent)
-                    case .upToDate:
-                        Text("\(model.version) · \(t.upToDate)").foregroundStyle(.secondary)
-                    case .unknown:
-                        Text(model.version).foregroundStyle(.secondary)
-                    }
+                    Text(model.version).foregroundStyle(.secondary)
                 }
                 Divider()
                 GroupRow {
@@ -545,7 +524,7 @@ struct UninstallView: View {
 
 @main
 @MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, SPUUpdaterDelegate, @preconcurrency SPUStandardUserDriverDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private static let bundleID = Bundle.main.bundleIdentifier ?? "com.myungchul.kleantalk"
     private static let showWindowNotification = Notification.Name(bundleID + ".showWindow")
 
@@ -572,19 +551,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, SPUU
 
     private var model: AppModel!
     private var window: NSWindow?
-    private var updater: SPUStandardUpdaterController!
     private var showWindowWhenReady = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         model = AppModel()
         model.onLanguageChange = { [weak self] in self?.buildMenu() }
-        updater = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: self, userDriverDelegate: self)
-        model.onInstallUpdate = { [weak self] in self?.updater.checkForUpdates(nil) }
-        if ProcessInfo.processInfo.environment["KLEANTALK_UPDATE_TEST"] != nil {
-            // 개발용: 업데이트를 바로 확인해 창 없이 받고, 받자마자 설치·재실행한다
-            updater.updater.automaticallyDownloadsUpdates = true
-            updater.updater.checkForUpdatesInBackground()
-        }
         buildMenu()
         if isBackgroundLaunch {
             NSApp.setActivationPolicy(.accessory)
@@ -606,47 +577,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, SPUU
         if model.state == .notWorking || model.serverOutdated { model.screen = .status; showWindow() }
     }
 
-    // MARK: 업데이트 (Sparkle)
-
-    /// 개발용: 시험할 때만 업데이트 목록 주소를 바꾼다 (KLEANTALK_FEED). 평소에는 Info.plist의 SUFeedURL.
-    func feedURLString(for updater: SPUUpdater) -> String? { ProcessInfo.processInfo.environment["KLEANTALK_FEED"] }
-
-    /// 창 없이 도는 동안에도 업데이트 창이 다른 창 뒤에 숨지 않게 한다
-    var supportsGentleScheduledUpdateReminders: Bool { true }
-
-    func standardUserDriverWillHandleShowingUpdate(_ handleShowingUpdate: Bool, forUpdate update: SUAppcastItem, state: SPUUserUpdateState) {
-        NSApp.setActivationPolicy(.regular)
-        NSApp.bringToFront()
-    }
-
-    func standardUserDriverWillFinishUpdateSession() {
-        if window?.isVisible != true && AdServer.installed { NSApp.setActivationPolicy(.accessory) }
-    }
-
-    @objc private func checkForUpdates(_ sender: Any?) { updater.checkForUpdates(sender) }
-
-    /// 창을 열 때 새 버전이 있는지 조용히 확인한다(창은 띄우지 않는다). 결과는 상태 화면의 버전 줄에 보인다.
-    private func probeForUpdate() {
-        let env = ProcessInfo.processInfo.environment
-        guard env["KLEANTALK_PREVIEW_UPDATE"] == nil, env["KLEANTALK_SNAPSHOT"] == nil,
-              updater.updater.canCheckForUpdates, !updater.updater.sessionInProgress else { return }
-        updater.updater.checkForUpdateInformation()
-    }
-
-    func updater(_ updater: SPUUpdater, didFindValidUpdate item: SUAppcastItem) {
-        model.update = .available(item.displayVersionString)
-    }
-
-    func updaterDidNotFindUpdate(_ updater: SPUUpdater) {
-        model.update = .upToDate
-    }
     @objc private func reportBug(_ sender: Any?) { model.reportBug() }
-
-    func updater(_ updater: SPUUpdater, willInstallUpdateOnQuit item: SUAppcastItem, immediateInstallationBlock: @escaping () -> Void) -> Bool {
-        guard ProcessInfo.processInfo.environment["KLEANTALK_UPDATE_TEST"] != nil else { return false }
-        immediateInstallationBlock()
-        return true
-    }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
         requestWindow()
@@ -671,7 +602,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, SPUU
         if window == nil {
             let w = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 440, height: 190),
                              styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView], backing: .buffered, defer: false)
-            w.title = "KleanTalk"   // 제목은 보이지 않지만 Mission Control·윈도우 메뉴에 쓰인다
+            w.title = "NoAdsTalk"   // 제목은 보이지 않지만 Mission Control·윈도우 메뉴에 쓰인다
             w.titleVisibility = .hidden
             w.titlebarAppearsTransparent = true
             w.isMovableByWindowBackground = true
@@ -692,7 +623,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, SPUU
         // 키보드 탐색이 켜진 맥에서는 창이 첫 버튼(버그 신고)에 초점을 줘 선택된 것처럼 보인다. 열 때는 초점을 비운다(Tab으로는 그대로 이동).
         window?.makeFirstResponder(nil)
         DispatchQueue.main.async { [weak self] in self?.window?.makeFirstResponder(nil) }
-        probeForUpdate()
         if let path = ProcessInfo.processInfo.environment["KLEANTALK_SNAPSHOT"] { snapshot(to: path) }
     }
 
@@ -716,7 +646,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, SPUU
         let main = NSMenu()
         let appItem = NSMenuItem()
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: t.checkUpdates, action: #selector(checkForUpdates(_:)), keyEquivalent: "").target = self
         appMenu.addItem(withTitle: t.reportBug + "…", action: #selector(reportBug(_:)), keyEquivalent: "").target = self
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: t.quit, action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")

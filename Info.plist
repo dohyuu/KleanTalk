@@ -5,9 +5,9 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>ko</string>
 	<key>CFBundleDisplayName</key>
-	<string>KleanTalk</string>
+	<string>NoAdsTalk</string>
 	<key>CFBundleExecutable</key>
-	<string>KleanTalk</string>
+	<string>NoAdsTalk</string>
 	<key>CFBundleIconFile</key>
 	<string>AppIcon</string>
 	<key>CFBundleIconName</key>
@@ -20,7 +20,7 @@
 		<string>en</string>
 	</array>
 	<key>CFBundleName</key>
-	<string>KleanTalk</string>
+	<string>NoAdsTalk</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -29,24 +29,11 @@
 	<string>17</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>12.0</string>
-	<key>NSAppTransportSecurity</key>
-	<dict>
-		<key>NSAllowsLocalNetworking</key>
-		<true/>
-	</dict>
 	<key>NSAppleEventsUsageDescription</key>
-	<string>KleanTalk uses this to ask for your administrator password when changing the hosts file.</string>
+	<string>NoAdsTalk uses this to ask for your administrator password when changing the hosts file.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
-	<key>SUEnableAutomaticChecks</key>
-	<true/>
-	<key>SUFeedURL</key>
-	<string>https://github.com/showmeyourway-sketch/KleanTalk/releases/latest/download/appcast.xml</string>
-	<key>SUPublicEDKey</key>
-	<string>Yh3dmRE2R5Pps7CzBuQo4yWrj3ocKt8jvTc6Qlm5s8M=</string>
-	<key>SUScheduledCheckInterval</key>
-	<integer>86400</integer>
 </dict>
 </plist>
