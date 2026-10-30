@@ -1,7 +1,7 @@
 // kleantalk-adserver: 카카오톡 광고 요청(serv.ds.kakao.com/sdk/banner)에 '빈 광고'를 돌려주는 작은 로컬 HTTPS 서버.
 //
-// hosts에서 serv.ds.kakao.com을 이 서버 전용 주소(127.84.11.1)로 돌리면 카카오톡의 광고 요청이 여기로 온다.
-// 개발 도구들이 흔히 쓰는 127.0.0.1:443과 부딪치지 않도록, 시작할 때 루프백(lo0)에 전용 주소를 하나 더 붙여 거기서만 받는다.
+// hosts에서 serv.ds.kakao.com을 루프백(127.0.0.1)으로 돌리면 카카오톡의 광고 요청이 여기로 온다.
+// macOS 13+에서는 launchd가 소켓을 열어 다른 주소의 HTTPS 서버와 공존한다.
 // 응답 형식은 진짜 광고 서버와 같고, 광고 HTML만 카카오톡 창과 같은 색으로 칠한 빈 화면이다.
 // 카카오톡은 이를 정상 광고로 받아들이므로, 광고를 못 받았을 때 나오는 카카오 홍보 배너도 뜨지 않는다.
 // 진짜 광고 서버에는 연결하지 않는다.
@@ -190,7 +190,7 @@ guard args.count == 3, let identity = loadIdentity(certPath: args[1], keyPath: a
 
 /// 서버 전용 주소와 포트. 시험할 때만 바꿀 수 있다 (KLEANTALK_ADSERVER_HOST, KLEANTALK_ADSERVER_PORT).
 let env = ProcessInfo.processInfo.environment
-let listenHost = env["KLEANTALK_ADSERVER_HOST"] ?? "127.84.11.1"
+let listenHost = env["KLEANTALK_ADSERVER_HOST"] ?? "127.0.0.1"
 let port = NWEndpoint.Port(env["KLEANTALK_ADSERVER_PORT"] ?? "443") ?? 443
 
 /// 루프백에 전용 주소를 붙인다 (이미 있으면 그대로). root로 실행될 때만 필요하다.
@@ -201,7 +201,9 @@ func addLoopbackAlias(_ address: String) {
     try? p.run()
     p.waitUntilExit()
 }
-if getuid() == 0 && listenHost.hasPrefix("127.") && listenHost != "127.0.0.1" { addLoopbackAlias(listenHost) }
+if getuid() == 0 && env["KLEANTALK_LAUNCHD_SOCKET"] == nil && listenHost.hasPrefix("127.") && listenHost != "127.0.0.1" {
+    addLoopbackAlias(listenHost)
+}
 
 func makeListener(host: String) -> NWListener {
     let tls = NWProtocolTLS.Options()
@@ -211,9 +213,18 @@ func makeListener(host: String) -> NWListener {
     let params = NWParameters(tls: tls, tcp: NWProtocolTCP.Options())
     params.requiredLocalEndpoint = .hostPort(host: NWEndpoint.Host(host), port: port)
     params.allowLocalEndpointReuse = true
-    guard let listener = try? NWListener(using: params) else {
-        FileHandle.standardError.write(Data("\(host):\(port)을 열지 못함\n".utf8))
-        exit(1)
+    let listener: NWListener
+    if #available(macOS 13.0, *), let socketKey = env["KLEANTALK_LAUNCHD_SOCKET"] {
+        // launchd가 주소별로 연 소켓을 사용한다. NWListener가 포트를 직접 예약하면
+        // 다른 주소의 같은 포트(Tailscale HTTPS 등)와도 충돌할 수 있다.
+        listener = NWListener(launchdSocketKey: socketKey, parameters: params)
+    } else {
+        // macOS 12 및 launchd 없이 실행하는 개발용 서버.
+        guard let directListener = try? NWListener(using: params) else {
+            FileHandle.standardError.write(Data("\(host):\(port)을 열지 못함\n".utf8))
+            exit(1)
+        }
+        listener = directListener
     }
     listener.newConnectionHandler = handle
     return listener
@@ -226,7 +237,7 @@ for listener in listeners {
         switch state {
         case .ready:
             ready += 1
-            // 두 포트를 모두 연 뒤에는 root 권한이 필요 없다. nobody로 내려간다.
+            // 리스너 준비 뒤에는 root 권한이 필요 없다. nobody로 내려간다.
             if ready == listeners.count && getuid() == 0 {
                 guard setgid(UInt32(bitPattern: -2)) == 0, setuid(UInt32(bitPattern: -2)) == 0 else {
                     log.error("권한을 낮추지 못해 종료")

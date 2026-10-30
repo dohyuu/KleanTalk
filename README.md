@@ -1,9 +1,11 @@
-# KleanTalk
+# NoAdsTalk
+
+KleanTalk 소스에서 업데이트 기능을 제거하고 이름을 바꾼 개인용 빌드입니다.
 
 맥용 카카오톡의 광고 자리를 **카카오톡과 같은 색의 빈 공간**으로 바꾸는 macOS 앱입니다.
 카카오톡 앱 파일을 고치거나 다시 서명하지 않고, 대화 내용과 설정에도 손대지 않습니다.
 
-![KleanTalk](docs/images/1-hero-ko.png)
+![NoAdsTalk](docs/images/1-hero-ko.png)
 
 ![설치는 세 단계](docs/images/3-install-steps-ko.png)
 
@@ -13,7 +15,7 @@
 ## 어떻게 동작하나요
 
 맥 카카오톡은 광고를 받지 못하면 그 자리에 카카오 홍보 배너를 대신 띄웁니다.
-그래서 광고 주소를 막기만 해서는 광고 자리가 비지 않습니다. KleanTalk은 이렇게 합니다.
+그래서 광고 주소를 막기만 해서는 광고 자리가 비지 않습니다. NoAdsTalk은 이렇게 합니다.
 
 1. `/etc/hosts`에서 카카오 광고 주소(`display.ad.daum.net`, `analytics.ad.daum.net`)를 막습니다.
 2. 카카오톡이 광고를 받아 오는 주소(`serv.ds.kakao.com`)는 이 맥 안의 작은 서버로 돌립니다.
@@ -24,7 +26,7 @@
 
 ## 설치
 
-1. [KleanTalk.dmg 받기](https://github.com/showmeyourway-sketch/KleanTalk/releases/latest/download/KleanTalk.dmg) 후 `KleanTalk.app`을 응용 프로그램 폴더로 옮깁니다.
+1. 아래의 **소스에서 빌드** 절차로 앱을 만들고 `~/Applications/NoAdsTalk.app`을 엽니다.
 2. 앱을 엽니다. 처음 열 때 *"Apple은 악성 코드가 없는지 확인할 수 없습니다"* 경고가 뜨면 다음과 같이 합니다.
    - 이 앱은 Apple 공증을 받지 않아 이 경고가 뜹니다.
    - **시스템 설정 → 개인정보 보호 및 보안**의 아래쪽에서 **그래도 열기**를 누르세요.
@@ -33,20 +35,18 @@
    - 두 번째: macOS가 인증서 신뢰 설정을 확인합니다.
 4. 설치가 끝나면 카카오톡이 자동으로 다시 시작되고, 광고 자리가 빈 공간으로 바뀝니다.
 
-설치 뒤에는 따로 켤 필요가 없습니다. KleanTalk은 로그인할 때 창 없이 실행돼 설정이 풀리지 않았는지 가끔 확인합니다.
+설치 뒤에는 따로 켤 필요가 없습니다. NoAdsTalk은 로그인할 때 창 없이 실행돼 설정이 풀리지 않았는지 가끔 확인합니다.
 macOS 업데이트로 hosts가 초기화되는 경우 등에 확인합니다. 문제가 생기면 창을 띄워 **다시 설치**를 권합니다.
 
-## 업데이트
+## 개인용 고정 빌드
 
-1.3부터는 앱이 하루에 한 번 새 버전을 확인합니다. 새 버전이 있으면 알려 주고, 누르면 설치한 뒤 다시 실행합니다.
-메뉴의 **업데이트 확인…**으로 바로 확인할 수도 있습니다.
-- 업데이트 파일은 서명을 확인한 뒤에만 설치합니다(Sparkle, EdDSA).
-- 새 버전에 바뀐 서버가 들어 있으면 **다시 설치**를 한 번 눌러 마무리합니다. 관리자 암호를 묻습니다.
-- 1.2 이하를 쓰고 있다면 1.3은 직접 받아 설치해 주세요. 그다음부터는 자동으로 업데이트됩니다.
+이 빌드에는 앱 업데이트 기능이 없습니다. 새 버전 확인·다운로드·설치를 하지 않습니다.
+앱을 바꾸려면 소스 변경을 직접 검토한 뒤 다시 빌드해 교체하세요.
+**다시 설치**는 현재 앱에 포함된 로컬 광고 서버를 설치하거나 인증서를 갱신합니다.
 
 ## 제거
 
-KleanTalk을 열고 **제거…**를 누릅니다. 다음을 모두 되돌리고 앱을 휴지통으로 옮깁니다.
+NoAdsTalk을 열고 **제거…**를 누릅니다. 다음을 모두 되돌리고 앱을 휴지통으로 옮깁니다.
 - 서버
 - 인증서 신뢰
 - hosts 설정
@@ -54,16 +54,16 @@ KleanTalk을 열고 **제거…**를 누릅니다. 다음을 모두 되돌리고
 
 ## 버그 신고
 
-KleanTalk 메뉴의 **버그 신고…**(1.4부터)를 누르면 GitHub 이슈 쓰기 화면이 열립니다. 앱 버전, macOS, 칩, 카카오톡 버전, 상태가 미리 채워집니다. 직접 쓰려면 [이슈 쓰기](https://github.com/showmeyourway-sketch/KleanTalk/issues/new?template=bug_report.md)를 누르세요. GitHub 계정이 필요합니다.
+NoAdsTalk 메뉴의 **버그 신고…**(1.4부터)를 누르면 GitHub 이슈 쓰기 화면이 열립니다. 앱 버전, macOS, 칩, 카카오톡 버전, 상태가 미리 채워집니다. 직접 쓰려면 [이슈 쓰기](https://github.com/showmeyourway-sketch/KleanTalk/issues/new?template=bug_report.md)를 누르세요. GitHub 계정이 필요합니다.
 
 ## 이 맥에서 바뀌는 것
 
 | 항목 | 위치 | 내용 |
 |---|---|---|
-| hosts | `/etc/hosts` | `# >>> KakaoAdBlock` … `# <<< KakaoAdBlock` 블록 (광고 주소 차단, `serv.ds.kakao.com` → `127.84.11.1`) |
+| hosts | `/etc/hosts` | `# >>> KakaoAdBlock` … `# <<< KakaoAdBlock` 블록 (광고 주소 차단, `serv.ds.kakao.com` → `127.0.0.1`) |
 | 빈 광고 서버 | `/Library/Application Support/KleanTalk/AdServer/` | 서버 실행 파일, 인증서, 키(관리자만 읽기 가능) |
 | 백그라운드 서비스 | `/Library/LaunchDaemons/com.myungchul.kleantalk.adserver.plist` | 서버를 항상 실행 |
-| 루프백 주소 | `lo0`에 `127.84.11.1` | 서버 전용 주소. 서버가 시작할 때 붙입니다 |
+| 루프백 주소 | `127.0.0.1` | macOS 기본 루프백 주소. 별칭을 추가하지 않습니다 |
 | 인증서 신뢰 | 사용자 신뢰 설정 | `serv.ds.kakao.com`의 HTTPS 서버 인증에만 |
 | 로그인 시 실행 | `~/Library/LaunchAgents/com.myungchul.kleantalk.plist` | 상태 확인용 |
 
@@ -73,7 +73,7 @@ KleanTalk 메뉴의 **버그 신고…**(1.4부터)를 누르면 GitHub 이슈 �
 - **신뢰 범위:** 시스템에는 이 사용자 계정에서, 그 이름의 HTTPS에만 신뢰하도록 등록합니다. 키가 새어 나가도 다른 사이트를 흉내 낼 수 없습니다.
 - **키:** 관리자(root)만 읽을 수 있는 폴더에 있습니다.
 - **서버 권한:** 시작할 때만 관리자 권한을 쓰고, 포트를 연 뒤에는 권한 없는 계정(`nobody`)으로 내려갑니다.
-- **접속 범위:** 이 맥 안의 전용 주소(`127.84.11.1:443`)에서만 받으므로 다른 기기에서 접속할 수 없습니다. `127.0.0.1:443`을 쓰는 개발 도구와도 부딪치지 않습니다.
+- **접속 범위:** 이 맥 안의 `127.0.0.1:443`에서만 받으므로 다른 기기에서 접속할 수 없습니다. macOS 13 이상에서는 다른 주소의 HTTPS 서버와 공존할 수 있습니다. 같은 `127.0.0.1:443`을 쓰는 프로그램은 함께 사용할 수 없습니다.
 - **다른 앱에 주는 영향:** hosts는 맥 전체에 적용됩니다. 그래서 브라우저에서도 위 카카오·다음 광고 주소가 막힙니다. iCloud 같은 다른 서비스는 영향을 받지 않습니다.
 
 ## 요구 사항과 한계
@@ -86,18 +86,13 @@ KleanTalk 메뉴의 **버그 신고…**(1.4부터)를 누르면 GitHub 이슈 �
 ## 소스에서 빌드
 
 ```bash
-./build.sh                # build/KleanTalk.app
+./build.sh                # build/NoAdsTalk.app
 ./build.sh --install      # 빌드한 뒤 ~/Applications에 복사
-./scripts/make-dmg.sh     # build/KleanTalk.dmg
-./scripts/release.sh 1.4 notes.md   # 새 버전 배포 (아래 설명)
+./scripts/make-dmg.sh     # build/NoAdsTalk.dmg
+open ~/Applications/NoAdsTalk.app  # 설치한 앱 실행
 ```
 
-- 처음 빌드할 때 [Sparkle](https://sparkle-project.org) 2.10.0을 공식 릴리스에서 받아, SHA-256을 확인한 뒤 `vendor/`에 풉니다.
-- **새 버전 배포:** `scripts/release.sh`가 버전을 올리고 다음 일을 한 번에 합니다.
-  - DMG와 업데이트용 zip을 만들고, zip을 서명합니다.
-  - `appcast.xml`을 만듭니다.
-  - 커밋·태그·push 후 GitHub Release에 올립니다.
-  - 설치된 앱은 `releases/latest/download/appcast.xml`을 보므로, 새 Release가 Latest가 되면 업데이트를 받습니다.
+- 빌드는 외부 업데이트 라이브러리를 다운로드하지 않습니다. 현재 체크아웃의 소스와 포함된 아이콘을 사용합니다.
 
 - 빌드에는 Xcode가 필요합니다. macOS 12용 Intel 빌드에 쓰는 Swift 호환 라이브러리가 Command Line Tools에는 없습니다.
 - 아이콘은 미리 컴파일한 파일(`Icon/compiled/`)을 씁니다. 아이콘을 바꿀 때만 `./scripts/make-icon.sh`를 실행하세요(Xcode 26 이상 필요).
@@ -118,25 +113,25 @@ sudo ./scripts/uninstall-adserver.sh
 
 ## English
 
-![KleanTalk](docs/images/1-hero-en.png)
+![NoAdsTalk](docs/images/1-hero-en.png)
 
-KleanTalk turns the ad slot in KakaoTalk for Mac into **empty space in KakaoTalk's own colors**. It doesn't patch or re-sign the KakaoTalk app, and doesn't touch your chats or settings.
+NoAdsTalk turns the ad slot in KakaoTalk for Mac into **empty space in KakaoTalk's own colors**. It doesn't patch or re-sign the KakaoTalk app, and doesn't touch your chats or settings.
 
 - **How it works:**
   1. It blocks Kakao's ad domains in `/etc/hosts`.
-  2. It points `serv.ds.kakao.com` at a tiny local server on `127.84.11.1:443`.
+  2. It points `serv.ds.kakao.com` at a tiny local server on `127.0.0.1:443`.
   3. That server answers ad requests with a well-formed *blank* ad. KakaoTalk accepts it as a real ad, so it doesn't fall back to its built-in promo banner.
   4. Nothing is fetched from the real ad server.
 - **Requirements:** macOS 12 (Monterey) or later, the same as KakaoTalk for Mac, on Apple Silicon or Intel Macs.
 - **Install:**
-  1. Open the app and choose a language, then click **Install**. You'll enter your password twice: once for the administrator install, and once for macOS's certificate-trust confirmation.
+  1. Build with `./build.sh --install`, open `~/Applications/NoAdsTalk.app`, choose a language, then click **Install**. You'll enter your password twice: once for the administrator install, and once for macOS's certificate-trust confirmation.
   2. Because the app isn't notarized, macOS may block the first launch. Allow it in **System Settings → Privacy & Security → Open Anyway**.
-- **Updates (1.3+):** the app checks once a day, and you can also choose **Check for Updates…** from the menu. Updates are verified with an EdDSA signature (Sparkle) before installing. If an update ships a new blank-ad server, click **Reinstall** once to finish.
+- **Personal fixed build:** this build has no in-app update checks, downloads, or installation. Review source changes and rebuild manually to replace it. Reinstall uses the local server bundled with the app.
 - **Uninstall:** click **Uninstall…** in the app. It removes everything (server, certificate trust, hosts entries, login item) and moves the app to the Trash.
 - **Report a bug:** choose **Report a Bug…** in the app menu (1.4+) to open a GitHub issue with your app version, macOS, chip, KakaoTalk version, and status filled in, or [open one directly](https://github.com/showmeyourway-sketch/KleanTalk/issues/new?template=bug_report.md). Needs a GitHub account.
 - **Security:**
   - The certificate is a non-CA leaf for `serv.ds.kakao.com` only, trusted for that hostname's SSL server auth in your user trust settings.
   - Its key is readable by root only.
-  - The server drops to `nobody` after binding and listens only on a dedicated loopback address.
+  - The server drops to `nobody` after binding and listens only on `127.0.0.1:443`. On macOS 13+, services using port 443 on other addresses can coexist; another service on the same `127.0.0.1:443` cannot.
 
 This is an unofficial personal project, not affiliated with Kakao. Use at your own risk.

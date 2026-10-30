@@ -6,14 +6,14 @@
 #  1. serv.ds.kakao.com 한 이름에만 쓰는 인증서와 키를 만든다. (인증 기관이 아닌 일반 인증서, 825일)
 #     키는 root만 읽을 수 있는 폴더에 둔다.
 #  2. (인증서 신뢰 등록은 이 스크립트가 아니라 KleanTalk 앱이 사용자 권한으로 한다. 아래 참고)
-#  3. 빈 광고 서버를 LaunchDaemon으로 등록한다. (전용 주소 127.84.11.1:443 / 포트를 연 뒤 nobody 권한으로 동작)
+#  3. 빈 광고 서버를 LaunchDaemon으로 등록한다. (루프백 주소 127.0.0.1:443 / 포트를 연 뒤 nobody 권한으로 동작)
 #  4. /etc/hosts에서 serv.ds.kakao.com을 그 전용 주소로 돌린다. 다른 광고 주소는 계속 막는다.
 set -euo pipefail
 
 [[ $EUID -eq 0 ]] || { echo "sudo로 실행하세요: sudo $0"; exit 1; }
 
 HOST=serv.ds.kakao.com
-ADDR=127.84.11.1   # 서버 전용 루프백 주소 (127.0.0.1:443을 쓰는 개발 도구와 부딪치지 않게)
+ADDR=127.0.0.1   # 재부팅 후에도 항상 존재하는 루프백 주소
 LABEL=com.myungchul.kleantalk.adserver
 DIR="/Library/Application Support/KleanTalk/AdServer"
 PLIST=/Library/LaunchDaemons/$LABEL.plist
@@ -66,6 +66,26 @@ fi
 #    터미널로 설치할 때는 맨 끝에 안내하는 명령을 사용자 권한(sudo 없이)으로 실행한다.
 
 # 3. LaunchDaemon
+# macOS 13+에서는 launchd가 전용 주소의 소켓을 열고 서버에 전달한다.
+# Network.framework의 전역 포트 예약 때문에 다른 주소의 443과 충돌하는 것을 피한다.
+SOCKET_CONFIG=""
+if [[ $(/usr/bin/sw_vers -productVersion | cut -d. -f1) -ge 13 ]]; then
+  SOCKET_CONFIG=$(cat <<EOF
+    <key>EnvironmentVariables</key>
+    <dict><key>KLEANTALK_LAUNCHD_SOCKET</key><string>HTTPS</string></dict>
+    <key>Sockets</key>
+    <dict>
+        <key>HTTPS</key>
+        <dict>
+            <key>SockFamily</key><string>IPv4</string>
+            <key>SockType</key><string>stream</string>
+            <key>SockNodeName</key><string>$ADDR</string>
+            <key>SockServiceName</key><string>443</string>
+        </dict>
+    </dict>
+EOF
+  )
+fi
 cat > "$PLIST" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -81,11 +101,14 @@ cat > "$PLIST" <<EOF
 	<key>RunAtLoad</key><true/>
 	<key>KeepAlive</key><true/>
 	<key>ProcessType</key><string>Interactive</string>
+$SOCKET_CONFIG
 </dict>
 </plist>
 EOF
 chown root:wheel "$PLIST"; chmod 644 "$PLIST"
 launchctl bootstrap system "$PLIST"
+# 이전 버전이 만들던 별칭은 새 서버에서 사용하지 않는다.
+/sbin/ifconfig lo0 -alias 127.84.11.1 2>/dev/null || true
 
 # 4. hosts: serv.ds.kakao.com만 서버 전용 주소로. KleanTalk 블록이 없으면 만든다.
 if ! grep -q '^# >>> KakaoAdBlock' /etc/hosts; then
